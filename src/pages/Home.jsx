@@ -1,208 +1,205 @@
-// src/pages/Home.jsx
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
+import data from "../graduados.json"; // Importar el archivo JSON
 
 const Home = () => {
-  // Estado para manejar los posts y los datos del nuevo post
-  const [posts, setPosts] = useState([]);
-  const [newPost, setNewPost] = useState({ title: '', description: '', image: null });
-  const [preview, setPreview] = useState(null); // Para previsualizar la imagen antes de subirla
+  const [graduados, setGraduados] = useState([]); // Todos los graduados
+  const [usuario, setUsuario] = useState(null); // Usuario actual
+  const [posts, setPosts] = useState([]); // Todos los posts combinados (usuario + otros)
+  const [nuevoPost, setNuevoPost] = useState({ title: "", description: "" }); // Nuevo post
+  const [mostrarModal, setMostrarModal] = useState(false); // Modal para crear post
 
-  // Maneja el cambio en los campos del formulario de nuevo post
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewPost((prevPost) => ({ ...prevPost, [name]: value }));
-  };
+  // Cargar datos del JSON y usuario del localStorage
+  useEffect(() => {
+    const storedUser = localStorage.getItem("loggedInUser");
+    let userPosts = [];
 
-  // Maneja la selección de imagen
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setNewPost((prevPost) => ({ ...prevPost, image: file }));
-      setPreview(URL.createObjectURL(file)); // Previsualización de la imagen
-    }
-  };
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setUsuario(parsedUser);
 
-  // Maneja la creación de un nuevo post
-  const handleCreatePost = (e) => {
-    e.preventDefault();
-    if (newPost.title && newPost.description && newPost.image) {
-      setPosts([
-        ...posts,
-        {
-          id: Date.now(),
-          title: newPost.title,
-          description: newPost.description,
-          image: newPost.image,
-          likes: 0,
-          dislikes: 0,
-          comments: [],
+      // Agregar información del autor a los posts del usuario
+      userPosts = (parsedUser.posts || []).map((post) => ({
+        ...post,
+        author: {
+          nombre: parsedUser.nombre,
+          foto: parsedUser.foto,
         },
-      ]);
-      setNewPost({ title: '', description: '', image: null });
-      setPreview(null); // Resetea la previsualización
+      }));
     }
-  };
 
-  // Maneja el "like" de un post
-  const handleLike = (postId) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === postId ? { ...post, likes: post.likes + 1 } : post
-      )
+    // Agregar información del autor a los posts del JSON
+    const jsonPosts = data.flatMap((user) =>
+      (user.posts || []).map((post) => ({
+        ...post,
+        author: {
+          nombre: user.nombre,
+          foto: user.foto,
+        },
+      }))
     );
-  };
 
-  // Maneja el "dislike" de un post
-  const handleDislike = (postId) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === postId ? { ...post, dislikes: post.dislikes + 1 } : post
-      )
+    // Combinar posts del usuario y del JSON, eliminando duplicados por `id`
+    const allPosts = [...userPosts, ...jsonPosts].filter(
+      (post, index, self) => index === self.findIndex((p) => p.id === post.id)
     );
-  };
 
-  // Maneja el envío de un comentario en un post
-  const handleAddComment = (postId, comment) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === postId ? { ...post, comments: [...post.comments, comment] } : post
-      )
-    );
+    setPosts(allPosts);
+
+    // Guardar graduados en el estado
+    const storedGraduados = localStorage.getItem("graduados");
+    if (storedGraduados) {
+      setGraduados(JSON.parse(storedGraduados));
+    } else {
+      setGraduados(data);
+      localStorage.setItem("graduados", JSON.stringify(data));
+    }
+  }, []);
+
+  // Función para crear un nuevo post
+  const crearPost = () => {
+    if (nuevoPost.title.trim() && nuevoPost.description.trim()) {
+      const nuevoPostCompleto = {
+        id: Date.now(), // Usar timestamp como ID único
+        title: nuevoPost.title,
+        description: nuevoPost.description,
+        image: "https://via.placeholder.com/300", // Imagen predeterminada
+        likes: 0,
+        dislikes: 0,
+        author: {
+          nombre: usuario.nombre,
+          foto: usuario.foto,
+        },
+      };
+
+      // Actualizar los posts del usuario actual
+      const updatedUserPosts = [...(usuario?.posts || []), nuevoPostCompleto];
+      const updatedUser = { ...usuario, posts: updatedUserPosts };
+
+      // Actualizar el usuario en los graduados
+      const updatedGraduados = graduados.map((grad) => {
+        if (grad.correo === usuario.correo) {
+          return { ...grad, posts: updatedUserPosts };
+        }
+        return grad;
+      });
+
+      // Guardar los datos actualizados en el estado y localStorage
+      setUsuario(updatedUser);
+      setGraduados(updatedGraduados);
+
+      // Combinar todos los posts y eliminar duplicados
+      const jsonPosts = data.flatMap((user) => user.posts || []);
+      const allPosts = [...updatedUserPosts, ...jsonPosts].filter(
+        (post, index, self) => index === self.findIndex((p) => p.id === post.id)
+      );
+      setPosts(allPosts);
+
+      localStorage.setItem("loggedInUser", JSON.stringify(updatedUser));
+      localStorage.setItem("graduados", JSON.stringify(updatedGraduados));
+
+      // Limpiar formulario y cerrar modal
+      setNuevoPost({ title: "", description: "" });
+      setMostrarModal(false);
+    } else {
+      alert("Por favor, completa todos los campos.");
+    }
   };
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">Sección de Inicio</h1>
+    <div className="p-6 bg-gray-100 min-h-screen">
+      <div className="text-right mb-6">
+        <button
+          onClick={() => setMostrarModal(true)}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+        >
+          Crear Post
+        </button>
+      </div>
 
-      {/* Formulario para crear un nuevo post */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Crear un Nuevo Post con Imagen</h2>
-        <form onSubmit={handleCreatePost} className="bg-white p-4 shadow-md rounded-lg">
-          <div className="mb-4">
-            <label className="block text-gray-700 font-bold mb-2">Título</label>
+      {mostrarModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md text-left">
+            <h2 className="text-xl font-bold mb-4">Crear Nuevo Post</h2>
             <input
               type="text"
-              name="title"
-              value={newPost.title}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border rounded-lg"
-              placeholder="Título del post"
-              required
+              placeholder="Título"
+              value={nuevoPost.title}
+              onChange={(e) => setNuevoPost({ ...nuevoPost, title: e.target.value })}
+              className="w-full px-4 py-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 font-bold mb-2">Descripción</label>
             <textarea
-              name="description"
-              value={newPost.description}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border rounded-lg"
-              placeholder="Descripción del post"
-              required
+              placeholder="Descripción"
+              value={nuevoPost.description}
+              onChange={(e) => setNuevoPost({ ...nuevoPost, description: e.target.value })}
+              className="w-full px-4 py-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              rows="4"
             ></textarea>
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 font-bold mb-2">Imagen</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="w-full px-3 py-2 border rounded-lg"
-              required
-            />
-          </div>
-          {/* Previsualización de la imagen */}
-          {preview && (
-            <div className="mb-4">
-              <img src={preview} alt="Previsualización" className="max-h-64 mx-auto" />
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setMostrarModal(false)}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={crearPost}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+              >
+                Guardar
+              </button>
             </div>
-          )}
-          <button
-            type="submit"
-            className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-2 rounded-lg"
+          </div>
+        </div>
+      )}
+
+<div className="max-w-4xl mx-auto space-y-6">
+  <h1 className="text-3xl font-bold text-gray-800">Posts de Graduados</h1>
+
+  <div className="space-y-6">
+    {posts.length > 0 ? (
+      posts.map((post, index) => {
+        const autor = graduados.find((grad) => grad.posts?.some((p) => p.id === post.id));
+
+        return (
+          <div
+            key={index}
+            className="bg-white rounded-lg shadow-md p-6 flex flex-col space-y-4"
           >
-            Crear Post
-          </button>
-        </form>
-      </div>
-
-      {/* Lista de posts */}
-      <div>
-        {posts.length > 0 ? (
-          posts.map((post) => (
-            <div key={post.id} className="bg-white p-4 shadow-md rounded-lg mb-6">
-              <h3 className="text-xl font-semibold">{post.title}</h3>
-              <p className="text-gray-700 mt-2">{post.description}</p>
-              {post.image && (
-                <div className="mt-4">
-                  <img
-                    src={URL.createObjectURL(post.image)}
-                    alt="Imagen del post"
-                    className="max-h-64 mx-auto"
-                  />
-                </div>
-              )}
-              <div className="flex items-center mt-4 space-x-4">
-                <button
-                  onClick={() => handleLike(post.id)}
-                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-4 rounded-lg"
-                >
-                  👍 {post.likes}
-                </button>
-                <button
-                  onClick={() => handleDislike(post.id)}
-                  className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-4 rounded-lg"
-                >
-                  👎 {post.dislikes}
-                </button>
-              </div>
-
-              {/* Sección de comentarios */}
-              <div className="mt-4">
-                <h4 className="font-semibold text-lg">Comentarios</h4>
-                {post.comments.length > 0 ? (
-                  <ul className="mt-2 space-y-2">
-                    {post.comments.map((comment, index) => (
-                      <li key={index} className="bg-gray-100 p-2 rounded">
-                        {comment}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-gray-500">No hay comentarios.</p>
-                )}
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const commentText = e.target.elements[`comment-${post.id}`].value;
-                    if (commentText) {
-                      handleAddComment(post.id, commentText);
-                      e.target.reset();
-                    }
-                  }}
-                  className="mt-4"
-                >
-                  <input
-                    type="text"
-                    name={`comment-${post.id}`}
-                    className="w-full px-3 py-2 border rounded-lg"
-                    placeholder="Escribe un comentario..."
-                  />
-                  <button
-                    type="submit"
-                    className="bg-red-700 hover:bg-red-800 text-white font-bold py-1 px-4 rounded-lg"
-                  >
-                    Comentar
-                  </button>
-                </form>
-              </div>
+            {/* Información del autor */}
+            <div className="flex items-center space-x-4">
+              <img
+                src={autor?.foto || "https://via.placeholder.com/150"}
+                alt={autor?.nombre || "Autor desconocido"}
+                className="w-12 h-12 rounded-full"
+              />
+              <h3 className="text-lg font-bold text-gray-800">{autor?.nombre || "Autor desconocido"}</h3>
             </div>
-          ))
-        ) : (
-          <p className="text-gray-700">Aún no hay posts. ¡Crea el primero!</p>
-        )}
-      </div>
+
+            {/* Contenido del post */}
+            <h3 className="text-red-700 font-bold text-lg">{post.title}</h3>
+            <p className="text-gray-700">{post.description}</p>
+            <img
+              src={post.image || "https://via.placeholder.com/300"}
+              alt={post.title}
+              className="w-full h-90 object-cover rounded-lg"
+            />
+            <div className="flex items-center space-x-4">
+              <button className="flex items-center space-x-1 text-green-600 hover:text-green-800">
+                👍 <span>{post.likes}</span>
+              </button>
+              <button className="flex items-center space-x-1 text-red-600 hover:text-red-800">
+                👎 <span>{post.dislikes}</span>
+              </button>
+            </div>
+          </div>
+        );
+      })
+    ) : (
+      <p className="text-gray-700 text-center">No hay posts disponibles en este momento.</p>
+    )}
+  </div>
+</div>
+
     </div>
   );
 };

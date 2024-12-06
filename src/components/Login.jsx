@@ -1,18 +1,41 @@
-// src/components/Login.jsx
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/images/logo.jpg';
+import graduados from '../graduados.json'; // Importa el JSON
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(null); // Para manejar mensajes de error
   const navigate = useNavigate();
+
+  // Verificar si el usuario ya está logueado
+  useEffect(() => {
+    const storedUser = localStorage.getItem('loggedInUser');
+    if (storedUser) {
+      // Si hay una sesión activa, redirige al perfil directamente
+      navigate('/home/perfil', { state: { user: JSON.parse(storedUser) } });
+    }
+  }, [navigate]);
 
   // Función para manejar el inicio de sesión
   const handleLogin = (e) => {
     e.preventDefault();
-    navigate('/home/perfil'); // Redirige a la página de perfil
+
+    // Buscar el usuario en el JSON
+    const usuario = graduados.find(
+      (user) => user.correo === email && user.contraseña === password
+    );
+
+    if (usuario) {
+      // Guardar el usuario en LocalStorage
+      localStorage.setItem('loggedInUser', JSON.stringify(usuario));
+      // Redirigir a la página de perfil
+      navigate('/home/perfil', { state: { user: usuario } });
+    } else {
+      // Si no se encuentra el usuario, mostrar mensaje de error
+      setError('Correo o contraseña incorrectos.');
+    }
   };
 
   return (
@@ -55,6 +78,12 @@ const Login = () => {
             />
           </div>
 
+          {error && (
+            <div className="text-red-600 text-sm mb-4">
+              {error}
+            </div>
+          )}
+
           <button
             type="submit"
             className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-2 rounded-lg"
@@ -66,13 +95,13 @@ const Login = () => {
         {/* Enlaces adicionales */}
         <div className="flex justify-between mt-4">
           <button
-            onClick={() => navigate('/register')} // Redirige a la página de registro
+            onClick={() => navigate('/register')}
             className="text-sm text-red-800 hover:underline"
           >
             Registrar
           </button>
           <button
-            onClick={() => navigate('/forgot-password')} // Ruta temporal para "Olvidé mi contraseña"
+            onClick={() => navigate('/forgot-password')}
             className="text-sm text-red-800 hover:underline"
           >
             Olvidé mi contraseña

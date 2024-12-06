@@ -1,11 +1,16 @@
-// src/components/Sidebar.jsx
-
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { FaChevronLeft, FaChevronRight, FaHome, FaUser, FaClipboard } from 'react-icons/fa';
+import React from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FaChevronLeft, FaChevronRight, FaHome, FaUser, FaClipboard, FaSignOutAlt } from 'react-icons/fa';
 
 const Sidebar = ({ isCollapsed, toggleSidebar }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Función para cerrar sesión
+  const handleLogout = () => {
+    localStorage.removeItem('loggedInUser'); // Limpiar el LocalStorage
+    navigate('/login', { replace: true }); // Redirigir al login con replace para evitar regresar con el botón atrás
+  };
 
   return (
     <div
@@ -49,6 +54,18 @@ const Sidebar = ({ isCollapsed, toggleSidebar }) => {
         >
           {!isCollapsed ? 'Trabajos' : <FaClipboard size={24} />}
         </Link>
+      </div>
+
+      {/* Botón de Cerrar Sesión */}
+      <div>
+        <button
+          onClick={handleLogout}
+          className={`p-2 rounded flex items-center justify-center bg-red-600 hover:bg-red-500 w-full ${
+            isCollapsed ? 'text-center' : ''
+          }`}
+        >
+          {isCollapsed ? <FaSignOutAlt size={24} /> : 'Cerrar Sesión'}
+        </button>
       </div>
     </div>
   );

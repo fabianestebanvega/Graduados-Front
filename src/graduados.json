@@ -1,0 +1,75 @@
+[
+  {
+    "id": 1,
+    "nombre": "Juan Pérez",
+    "correo": "juanperez@ejemplo",
+    "esEmpresario": true,
+    "direccion": "Calle 123, Ciudad, País",
+    "cedula": "123456789",
+    "contraseña": "password123",
+    "foto": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg/220px-Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg",
+    "posts": [
+      {
+        "id": 1,
+        "title": "Mi primer post",
+        "description": "Este es el contenido del primer post.",
+        "image": "https://ludopedio.org.br/wp-content/uploads/copa-2022-1536x1024.jpg",
+        "likes": 10,
+        "dislikes": 2
+      },
+      {
+        "id": 2,
+        "title": "Mi segundo post",
+        "description": "Contenido del segundo post.",
+        "image": "https://via.placeholder.com/300",
+        "likes": 20,
+        "dislikes": 5
+      }
+    ],
+    "postTrabajo": [
+      {
+        "id": 1,
+        "title": "Busco programador",
+        "description": "Se busca programador con experiencia en React y Node.js.",
+        "company": "Tech Solutions",
+        "location": "San José de Cúcuta, Colombia"
+      },
+      {
+        "id": 2,
+        "title": "Diseñador Gráfico",
+        "description": "Se necesita diseñador gráfico para proyecto freelance.",
+        "company": "Creative Agency",
+        "location": "Remoto"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "nombre": "María López",
+    "correo": "maria.lopez@ejemplo.com",
+    "esEmpresario": false,
+    "direccion": "Avenida Principal 456, Ciudad, País",
+    "cedula": "987654321",
+    "contraseña": "password",
+    "foto": "https://media.istockphoto.com/id/1311285222/es/vector/hermosa-mujer-de-pelo-largo-piel-perfecta-hermosa-jovencita-vista-lateral.jpg?s=612x612&w=0&k=20&c=dxpRQIlTPEmlFdRkW8pcjbpv4qSQCTeOQ2iW6NxEQr8=",
+    "posts": [
+      {
+        "id": 3,
+        "title": "Post dddde María",
+        "description": "Contenido del post de María.",
+        "image": "https://via.placeholder.com/300",
+        "likes": 15,
+        "dislikes": 1
+      }
+    ],
+    "postTrabajo": [
+      {
+        "id": 3,
+        "title": "Busco diseñador UX/UI",
+        "description": "Se necesita diseñador UX/UI con experiencia en prototipos interactivos.",
+        "company": "Innovate Studio",
+        "location": "Medellín, Colombia"
+      }
+    ]
+  }
+]
